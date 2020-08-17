@@ -15,7 +15,7 @@ std::vector<RoomConfig> read_config_from_yaml(const YAML::Node &yaml)
     const auto size = yaml.size();
     for (unsigned int i = 0; i < size; i++)
     {
-        name_to_index[yaml[i]["name"].as<std::string>()] = i + 1;
+        name_to_index[yaml[i]["name"].as<std::string>()] = i;
     }
 
     for (const auto &room_yaml : yaml)
@@ -99,7 +99,7 @@ TEST_CASE("read_config_from_yaml()")
         CHECK(config[0].movement_cost == 10.f);
         CHECK(config[0].color == rgb_t{255, 255, 25});
         CHECK(config[0].attributes == std::vector<std::string>{"grouped"});
-        CHECK(config[0].weights[2] == 0.02f);
+        CHECK(config[0].weights[1] == 0.02f);
         CHECK(config[1].name == "stockpile");
         CHECK(config[1].count == 1);
         CHECK(config[1].minimum_size == 100);
@@ -107,8 +107,8 @@ TEST_CASE("read_config_from_yaml()")
         CHECK(config[1].movement_cost == 2.f);
         CHECK(config[1].color == rgb_t{230, 25, 75});
         CHECK(config[1].attributes == std::vector<std::string>{});
-        CHECK(config[1].weights[1] == 0.5f);
-        CHECK(config[1].weights[3] == 5.f);
+        CHECK(config[1].weights[0] == 0.5f);
+        CHECK(config[1].weights[2] == 5.f);
         CHECK(config[2].name == "workshop");
         CHECK(config[2].count == 1);
         CHECK(config[2].minimum_size == 50);
@@ -116,8 +116,8 @@ TEST_CASE("read_config_from_yaml()")
         CHECK(config[2].movement_cost == 3.f);
         CHECK(config[2].color == rgb_t{60, 180, 75});
         CHECK(config[2].attributes == std::vector<std::string>{});
-        CHECK(config[2].weights[1] == 0.3f);
-        CHECK(config[2].weights[2] == 5.f);
+        CHECK(config[2].weights[0] == 0.3f);
+        CHECK(config[2].weights[1] == 5.f);
     }
 }
 }

@@ -11,7 +11,7 @@ namespace rlo
 Map::Map(unsigned int size, const std::vector<Room> &rooms)
 {
     m_size = size;
-    m_data = std::vector<unsigned char>(m_size * m_size, 0);
+    m_data = std::vector<unsigned char>(m_size * m_size, floor);
 
     for (const auto &room : rooms)
     {
