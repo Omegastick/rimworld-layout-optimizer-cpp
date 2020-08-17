@@ -1,0 +1,173 @@
+- name: bedroom
+  count: 10
+  minimum_size: 20
+  size_scaling: 0.5
+  movement_cost: 10
+  color: [255, 255, 25]
+  attributes:
+    - grouped
+  weights:
+    stockpile: 0.02
+    freezer: 0.05
+    rec_room: 0.03
+    dining_room: 0.04
+- name: stockpile
+  count: 1
+  minimum_size: 100
+  size_scaling: 2
+  movement_cost: 2
+  attributes: []
+  color: [230, 25, 75]
+  weights:
+    bedroom: 0.5
+    workshop: 5
+    kitchen: 1
+    freezer: 1
+    hospital: 0.07
+    rec_room: 0.3
+    dining_room: 0.3
+- name: workshop
+  count: 1
+  minimum_size: 50
+  size_scaling: 0.5
+  movement_cost: 3
+  attributes: []
+  color: [60, 180, 75]
+  weights:
+    bedroom: 0.3
+    stockpile: 5
+    freezer: 1
+    rec_room: 0.3
+    dining_room: 0.3
+- name: kitchen
+  count: 1
+  minimum_size: 16
+  size_scaling: 0.1
+  movement_cost: 3
+  attributes: []
+  color: [0, 130, 200]
+  weights:
+    bedroom: 0.05
+    stockpile: 0.2
+    butcher: 0.05
+    freezer: 3
+    rec_room: 0.05
+    dining_room: 0.05
+- name: butcher
+  count: 1
+  minimum_size: 12
+  size_scaling: 0.1
+  movement_cost: 7
+  attributes: []
+  color: [245, 130, 38]
+  weights:
+    bedroom: 0.02
+    stockpile: 3
+    kitchen: 1
+    freezer: 5
+    rec_room: 0.05
+    dining_room: 0.05
+- name: freezer
+  count: 1
+  minimum_size: 30
+  size_scaling: 3
+  movement_cost: 5
+  attributes: []
+  color: [170, 255, 195]
+  weights:
+    bedroom: 0.02
+    stockpile: 1
+    kitchen: 5
+    butcher: 1
+    hospital: 0.5
+    rec_room: 0.05
+    dining_room: 2
+- name: hospital
+  count: 1
+  minimum_size: 36
+  size_scaling: 0.7
+  movement_cost: 8
+  attributes: []
+  color: [70, 240, 240]
+  weights:
+    bedroom: 0.05
+    stockpile: 0.3
+    rec_room: 0.1
+    dining_room: 0.1
+- name: rec_room
+  count: 1
+  minimum_size: 50
+  size_scaling: 2
+  movement_cost: 2
+  attributes: []
+  color: [240, 50, 230]
+  weights:
+    bedroom: 0.05
+    stockpile: 1
+    workshop: 0.2
+    freezer: 0.5
+    dining_room: 0.5
+- name: dining_room
+  count: 1
+  minimum_size: 30
+  size_scaling: 2
+  movement_cost: 3
+  attributes: []
+  color: [250, 190, 190]
+  weights:
+    bedroom: 0.2
+    stockpile: 1
+    freezer: 0.5
+    rec_room: 0.5
+- name: science_room
+  count: 1
+  minimum_size: 36
+  size_scaling: 0.5
+  movement_cost: 1.5
+  attributes: []
+  color: [182, 147, 234]
+  weights:
+    bedroom: 0.05
+    stockpile: 0.05
+    freezer: 0.5
+- name: farm
+  count: 1
+  minimum_size: 140
+  size_scaling: 1
+  movement_cost: 1.5
+  attributes:
+    - no-walls
+  color: [173, 244, 132]
+  weights:
+    bedroom: 0.05
+    stockpile: 0.2
+    freezer: 0.2
+- name: solar_farm
+  count: 1
+  minimum_size: 50
+  size_scaling: 0.1
+  movement_cost: 20
+  attributes:
+    - no-walls
+  color: [40, 64, 102]
+  weights:
+    bedroom: 0.05
+- name: battery_storage
+  count: 1
+  minimum_size: 25
+  size_scaling: 0.5
+  movement_cost: 5
+  attributes: []
+  color: [119, 33, 58]
+  weights:
+    bedroom: 0.05
+- name: prison
+  count: 1
+  minimum_size: 50
+  size_scaling: 1
+  movement_cost: 10
+  attributes: []
+  color: [94, 95, 99]
+  weights:
+    bedroom: 0.05
+    freezer: 0.5
