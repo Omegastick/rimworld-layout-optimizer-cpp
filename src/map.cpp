@@ -13,7 +13,7 @@ Map::Map(unsigned int size, const std::vector<Room> &rooms)
     m_size = size;
     m_data = std::vector<unsigned char>(m_size * m_size, 0);
 
-    for (const auto room : rooms)
+    for (const auto &room : rooms)
     {
         for (unsigned int x = room.x; x < room.x + room.width; x++)
         {
@@ -110,7 +110,7 @@ TEST_CASE("Map")
                 {Room{25, 1, 2, 3, 4, {true, false, true, false}, {0, 0, 2, 0}, {0, 0, 1, 0}, {}}});
 
             CHECK(map.get(1, 2) == door);
-            CHECK(map.get(3, 5) == door);
+            CHECK(map.get(3, 3) == door);
 
             // const auto bmp = map.to_bitmap({{floor, {255, 255, 255}},
             //                                 {wall, {0, 0, 0}},
