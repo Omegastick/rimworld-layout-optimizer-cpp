@@ -4,9 +4,25 @@
 #include <yaml-cpp/yaml.h>
 
 #include "config.hpp"
+#include "utils.hpp"
 
 namespace rlo
 {
+std::unordered_map<unsigned char, rgb_t> config_to_color_map(const std::vector<RoomConfig> &config)
+{
+    std::unordered_map<unsigned char, rgb_t> color_map;
+    color_map[floor] = {255, 255, 255};
+    color_map[door] = {127, 127, 127};
+    color_map[wall] = {0, 0, 0};
+
+    for (const auto &room : config)
+    {
+        color_map[room.type] = room.color;
+    }
+
+    return color_map;
+}
+
 std::vector<RoomConfig> read_config_from_yaml(const YAML::Node &yaml)
 {
     std::vector<RoomConfig> config;
@@ -40,7 +56,8 @@ std::vector<RoomConfig> read_config_from_yaml(const YAML::Node &yaml)
 
         for (const auto &weight : room_yaml["weights"])
         {
-            room.weights[name_to_index[weight.first.as<std::string>()]] = weight.second.as<float>();
+            room.weights[name_to_index[weight.first.as<std::string>()]] =
+                weight.second.as<float>();
         }
 
         config.push_back(room);

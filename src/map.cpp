@@ -20,9 +20,9 @@ Map::Map(unsigned int size, const std::vector<Room> &rooms)
             for (unsigned int y = room.y; y < room.y + room.height; y++)
             {
                 if (x == room.x || y == room.y || x == room.x + room.width - 1 ||
-                    y == room.y + room.height - 1)
+                    y == room.y + room.height - 1 || x >= m_size || y >= m_size)
                 {
-                    set(x, y, wall);
+                    set(std::min(x, m_size - 1), std::min(y, m_size - 1), wall);
                 }
                 else
                 {
@@ -35,7 +35,8 @@ Map::Map(unsigned int size, const std::vector<Room> &rooms)
         {
             if (room.doors_active[i])
             {
-                set(room.x + room.door_xs[i], room.y + room.door_ys[i], door);
+                set(std::min(room.x + room.door_xs[i], m_size - 1),
+                    std::min(room.y + room.door_ys[i], m_size - 1), door);
             }
         }
     }
@@ -75,10 +76,15 @@ TEST_CASE("Map")
 
         SUBCASE("Places walls around a room")
         {
-            const auto map = Map(
-                10,
-                {Room{
-                    25, 1, 2, 3, 4, {false, false, false, false}, {0, 0, 0, 0}, {0, 0, 0, 0}, {}}});
+            const auto map = Map(10, {Room{25,
+                                           1,
+                                           2,
+                                           3,
+                                           4,
+                                           {false, false, false, false},
+                                           {0, 0, 0, 0},
+                                           {0, 0, 0, 0},
+                                           {}}});
 
             CHECK(map.get(1, 2) == wall);
             CHECK(map.get(1, 3) == wall);
@@ -94,10 +100,15 @@ TEST_CASE("Map")
 
         SUBCASE("Fills in room with the relevant tiles")
         {
-            const auto map = Map(
-                10,
-                {Room{
-                    25, 1, 2, 3, 4, {false, false, false, false}, {0, 0, 0, 0}, {0, 0, 0, 0}, {}}});
+            const auto map = Map(10, {Room{25,
+                                           1,
+                                           2,
+                                           3,
+                                           4,
+                                           {false, false, false, false},
+                                           {0, 0, 0, 0},
+                                           {0, 0, 0, 0},
+                                           {}}});
 
             CHECK(map.get(2, 3) == 25);
             CHECK(map.get(2, 4) == 25);
@@ -107,7 +118,8 @@ TEST_CASE("Map")
         {
             const auto map = Map(
                 10,
-                {Room{25, 1, 2, 3, 4, {true, false, true, false}, {0, 0, 2, 0}, {0, 0, 1, 0}, {}}});
+                {Room{
+                    25, 1, 2, 3, 4, {true, false, true, false}, {0, 0, 2, 0}, {0, 0, 1, 0}, {}}});
 
             CHECK(map.get(1, 2) == door);
             CHECK(map.get(3, 3) == door);

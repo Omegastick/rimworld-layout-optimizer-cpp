@@ -21,4 +21,6 @@ struct RoomConfig
 };
 
 std::vector<RoomConfig> read_config_from_file(const std::string &file);
+std::unordered_map<unsigned char, rgb_t>
+config_to_color_map(const std::vector<RoomConfig> &config);
 }
