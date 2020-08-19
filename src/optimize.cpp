@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <random>
 
 #include <doctest/doctest.h>
@@ -22,7 +23,7 @@ std::vector<Room> generate_random_rooms(const std::vector<RoomConfig> &config)
     std::vector<Room> rooms;
     for (const auto &room_config : config)
     {
-        for (int i = 0; i < room_config.count; i++)
+        for (unsigned int i = 0; i < room_config.count; i++)
         {
             const unsigned int width = size_dist(rng);
             const unsigned int height = size_dist(rng);
@@ -45,21 +46,97 @@ std::vector<Room> generate_random_rooms(const std::vector<RoomConfig> &config)
     return rooms;
 }
 
-void run_optimization(const std::vector<RoomConfig> &config) {}
-
-TEST_CASE("generate_random_map()")
+template <class Generator>
+std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
 {
-    SUBCASE("Quick tests")
+    std::vector<Room> output(input);
+
+    const auto choice = std::uniform_real_distribution<double>()(rng);
+    // Apply a random adjustment to a single room
+    if (choice > 0.05)
     {
-        const auto config = read_config_from_file("config.yml");
-        const auto color_map = config_to_color_map(config);
-        for (int i = 0; i < 10; i++)
+        const unsigned int room_index =
+            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
+        auto &room = output[room_index];
+
+        const auto move_type = std::uniform_int_distribution<unsigned int>(0, 5)(rng);
+        int move_amount;
+        unsigned int door_choice;
+        switch (move_type)
         {
-            const auto rooms = generate_random_rooms(config);
-            const Map map(map_size, rooms);
-            const auto bmp = map.to_bitmap(color_map);
-            bmp.save_image(std::to_string(i) + ".bmp");
+        case 0: // X
+            move_amount =
+                static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            room.x = std::clamp(static_cast<int>(room.x) + move_amount, 0,
+                                static_cast<int>(map_size) - 1);
+            break;
+        case 1: // Y
+            move_amount =
+                static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            room.y = std::clamp(static_cast<int>(room.y) + move_amount, 0,
+                                static_cast<int>(map_size) - 1);
+            break;
+        case 2: // Width
+            move_amount =
+                static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            room.width = std::clamp(static_cast<int>(room.width) + move_amount, 4,
+                                    static_cast<int>(map_size) - 1);
+            break;
+        case 3: // Height
+            move_amount =
+                static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            room.height = std::clamp(static_cast<int>(room.height) + move_amount, 4,
+                                     static_cast<int>(map_size) - 1);
+            break;
+        case 4: // Number of doors
+            door_choice = std::uniform_int_distribution<unsigned int>(0, 3)(rng);
+            room.doors_active[door_choice] = !room.doors_active[door_choice];
+            break;
+        case 5: // Door position
+            door_choice = std::uniform_int_distribution<unsigned int>(0, 3)(rng);
+            move_amount =
+                static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            const int horizontal = std::uniform_int_distribution<int>(0, 1)(rng);
+            if (horizontal)
+            {
+                room.door_xs[door_choice] =
+                    std::clamp(static_cast<int>(room.door_xs[door_choice]) + move_amount, 0,
+                               static_cast<int>(map_size) - 1);
+            }
+            else
+            {
+                room.door_ys[door_choice] =
+                    std::clamp(static_cast<int>(room.door_ys[door_choice]) + move_amount, 0,
+                               static_cast<int>(map_size) - 1);
+            }
+            break;
         }
     }
+    // Swap two rooms
+    else
+    {
+        unsigned int choice_a =
+            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
+        unsigned int choice_b =
+            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
+        if (choice_a == choice_b)
+        {
+            if (choice_b > 0)
+            {
+                choice_b--;
+            }
+            else
+            {
+                choice_b++;
+            }
+        }
+        const auto temp = output[choice_a].type;
+        output[choice_a].type = output[choice_b].type;
+        output[choice_b].type = temp;
+    }
+
+    return output;
 }
+
+void run_optimization(const std::vector<RoomConfig> &config) {}
 }

@@ -6,6 +6,7 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
 project(rimworldlayoutoptimizer)
 
 add_executable(rimworldlayoutoptimizer "")
+set_property(TARGET rimworldlayoutoptimizer PROPERTY CXX_STANDARD 17)
 
 target_compile_options(rimworldlayoutoptimizer PRIVATE 
     -Wall 
