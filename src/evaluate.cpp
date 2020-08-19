@@ -102,7 +102,8 @@ std::vector<RoomInfo> analyze_rooms(const Map &map)
                 rooms.emplace_back(RoomInfo{tile, room_coordinates.size(),
                                             room_coordinates[room_coordinates.size() / 2].first,
                                             room_coordinates[room_coordinates.size() / 2].second,
-                                            max_x - min_x, max_y - min_y, room_coordinates});
+                                            max_x + 1 - min_x, max_y + 1 - min_y,
+                                            room_coordinates});
             }
         }
     }
@@ -237,7 +238,7 @@ float evaluate(const Map &map, const std::vector<RoomConfig> &config)
         // Room shape
         // We calculate the expected area if the room was a rectangle, and any difference between
         // that and the actual area is considered bad.
-        score -= static_cast<float>(room.width * room.height - room.size);
+        score -= static_cast<float>(room.width * room.height - static_cast<int>(room.size));
 
         // Distance to other rooms
         std::vector<float> temp_cost_map(cost_map);

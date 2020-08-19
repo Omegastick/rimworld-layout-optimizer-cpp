@@ -1,10 +1,12 @@
 #include <algorithm>
+#include <iostream>
 #include <random>
 
 #include <doctest/doctest.h>
 
 #include "optimize.hpp"
 #include "config.hpp"
+#include "evaluate.hpp"
 #include "map.hpp"
 
 namespace rlo
@@ -79,14 +81,12 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
         case 2: // Width
             move_amount =
                 static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
-            room.width = std::clamp(static_cast<int>(room.width) + move_amount, 4,
-                                    static_cast<int>(map_size) - 1);
+            room.width = std::clamp(static_cast<int>(room.width) + move_amount, 4, 15);
             break;
         case 3: // Height
             move_amount =
                 static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
-            room.height = std::clamp(static_cast<int>(room.height) + move_amount, 4,
-                                     static_cast<int>(map_size) - 1);
+            room.height = std::clamp(static_cast<int>(room.height) + move_amount, 4, 15);
             break;
         case 4: // Number of doors
             door_choice = std::uniform_int_distribution<unsigned int>(0, 3)(rng);
@@ -101,13 +101,13 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
             {
                 room.door_xs[door_choice] =
                     std::clamp(static_cast<int>(room.door_xs[door_choice]) + move_amount, 0,
-                               static_cast<int>(map_size) - 1);
+                               16;
             }
             else
             {
                 room.door_ys[door_choice] =
                     std::clamp(static_cast<int>(room.door_ys[door_choice]) + move_amount, 0,
-                               static_cast<int>(map_size) - 1);
+                               16;
             }
             break;
         }
@@ -138,5 +138,38 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
     return output;
 }
 
-void run_optimization(const std::vector<RoomConfig> &config) {}
+void run_optimization(const std::vector<RoomConfig> &config)
+{
+    std::random_device device;
+    std::mt19937 rng(device());
+
+    const auto color_map = config_to_color_map(config);
+
+    auto rooms = generate_random_rooms(config);
+    float score = evaluate(Map(map_size, rooms), config);
+
+    float threshold = 100000.f;
+
+    for (int i = 0; i < 100000; i++)
+    {
+        auto new_rooms = permute(rooms, rng);
+        float new_score = evaluate(Map(map_size, new_rooms), config);
+        if (score - new_score < threshold)
+        {
+            score = new_score;
+            rooms = new_rooms;
+        }
+
+        if (i % 1000 == 0)
+        {
+            std::cout << std::to_string(i / 100000.f * 100.f) << "%\n";
+            std::cout << "Threshold: " << std::to_string(threshold) << "\n";
+            std::cout << "Score: " << std::to_string(score) << "\n";
+            std::cout << "---\n";
+            const auto bmp = Map(map_size, rooms).to_bitmap(color_map);
+            bmp.save_image("output/" + std::to_string(i) + ".bmp");
+            threshold *= 0.9f;
+        }
+    }
+}
 }
