@@ -7,6 +7,7 @@ project(rimworldlayoutoptimizer)
 
 add_executable(rimworldlayoutoptimizer "")
 set_property(TARGET rimworldlayoutoptimizer PROPERTY CXX_STANDARD 17)
+target_link_libraries(rimworldlayoutoptimizer PRIVATE pthread)
 
 target_compile_options(rimworldlayoutoptimizer PRIVATE 
     -Wall 

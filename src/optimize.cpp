@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <future>
 #include <iostream>
 #include <random>
 
@@ -57,8 +58,8 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
     // Apply a random adjustment to a single room
     if (choice > 0.05)
     {
-        const unsigned int room_index =
-            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
+        const unsigned int room_index = std::uniform_int_distribution<unsigned int>(
+            0, static_cast<unsigned int>(output.size()) - 1)(rng);
         auto &room = output[room_index];
 
         const auto move_type = std::uniform_int_distribution<unsigned int>(0, 5)(rng);
@@ -81,11 +82,26 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
         case 2: // Width
             move_amount =
                 static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            for (auto &door : room.door_xs)
+            {
+                if (door == room.width)
+                {
+                    door = std::clamp(static_cast<int>(door) + move_amount - 1, 4, 14);
+                }
+            }
             room.width = std::clamp(static_cast<int>(room.width) + move_amount, 4, 15);
+
             break;
         case 3: // Height
             move_amount =
                 static_cast<int>(std::round(std::normal_distribution<double>(0, 3)(rng)));
+            for (auto &door : room.door_ys)
+            {
+                if (door == room.height)
+                {
+                    door = std::clamp(static_cast<int>(room.height) + move_amount - 1, 4, 14);
+                }
+            }
             room.height = std::clamp(static_cast<int>(room.height) + move_amount, 4, 15);
             break;
         case 4: // Number of doors
@@ -101,13 +117,13 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
             {
                 room.door_xs[door_choice] =
                     std::clamp(static_cast<int>(room.door_xs[door_choice]) + move_amount, 0,
-                               16;
+                               static_cast<int>(room.width));
             }
             else
             {
                 room.door_ys[door_choice] =
                     std::clamp(static_cast<int>(room.door_ys[door_choice]) + move_amount, 0,
-                               16;
+                               static_cast<int>(room.height));
             }
             break;
         }
@@ -115,10 +131,10 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
     // Swap two rooms
     else
     {
-        unsigned int choice_a =
-            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
-        unsigned int choice_b =
-            std::uniform_int_distribution<unsigned int>(0, output.size() - 1)(rng);
+        unsigned int choice_a = std::uniform_int_distribution<unsigned int>(
+            0, static_cast<unsigned int>(output.size()) - 1)(rng);
+        unsigned int choice_b = std::uniform_int_distribution<unsigned int>(
+            0, static_cast<unsigned int>(output.size()) - 1)(rng);
         if (choice_a == choice_b)
         {
             if (choice_b > 0)
@@ -141,35 +157,76 @@ std::vector<Room> permute(const std::vector<Room> &input, Generator &rng)
 void run_optimization(const std::vector<RoomConfig> &config)
 {
     std::random_device device;
-    std::mt19937 rng(device());
 
     const auto color_map = config_to_color_map(config);
 
     auto rooms = generate_random_rooms(config);
     float score = evaluate(Map(map_size, rooms), config);
 
-    float threshold = 100000.f;
+    float threshold = 10000.f;
 
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < 500; i++)
     {
-        auto new_rooms = permute(rooms, rng);
-        float new_score = evaluate(Map(map_size, new_rooms), config);
-        if (score - new_score < threshold)
+        std::cout << std::to_string(static_cast<float>(i) / 500.f * 100.f) << "%\n";
+        std::cout << "Threshold: " << std::to_string(threshold) << "\n";
+        std::cout << "Score: " << std::to_string(score) << "\n";
+        std::cout << "---\n";
+        const auto bmp = Map(map_size, rooms).to_bitmap(color_map);
+        bmp.save_image("output/" + std::to_string(i) + ".bmp");
+
+        std::vector<std::future<std::pair<std::vector<Room>, float>>> futures;
+        for (int thread = 0; thread < 16; thread++)
         {
-            score = new_score;
-            rooms = new_rooms;
+            futures.emplace_back(std::async(
+                [](std::vector<Room> starting_rooms, float starting_score,
+                   std::vector<RoomConfig> config, float threshold, int seed) {
+                    std::mt19937 rng(seed);
+
+                    float score = starting_score;
+                    auto rooms = starting_rooms;
+
+                    for (int j = 0; j < 1000; j++)
+                    {
+                        const int number_of_permutations =
+                            std::uniform_int_distribution<int>(1, 3)(rng);
+                        auto new_rooms = rooms;
+                        for (int i = 0; i < number_of_permutations; i++)
+                        {
+                            new_rooms = permute(rooms, rng);
+                        }
+                        float new_score = evaluate(Map(map_size, new_rooms), config);
+                        if (score - new_score < threshold)
+                        {
+                            score = new_score;
+                            rooms = new_rooms;
+                        }
+                    }
+
+                    return std::make_pair(rooms, score);
+                },
+                rooms, score, config, threshold, device() + i));
         }
 
-        if (i % 1000 == 0)
+        score = -std::numeric_limits<float>::infinity();
+
+        for (auto &future : futures)
         {
-            std::cout << std::to_string(i / 100000.f * 100.f) << "%\n";
-            std::cout << "Threshold: " << std::to_string(threshold) << "\n";
-            std::cout << "Score: " << std::to_string(score) << "\n";
-            std::cout << "---\n";
-            const auto bmp = Map(map_size, rooms).to_bitmap(color_map);
-            bmp.save_image("output/" + std::to_string(i) + ".bmp");
-            threshold *= 0.9f;
+            const auto result = future.get();
+            if (result.second > score)
+            {
+                rooms = result.first;
+                score = result.second;
+            }
         }
+
+        threshold *= 0.9f;
     }
+
+    std::cout << "100%\n";
+    std::cout << "Threshold: " << std::to_string(threshold) << "\n";
+    std::cout << "Score: " << std::to_string(score) << "\n";
+    std::cout << "---\n";
+    const auto bmp = Map(map_size, rooms).to_bitmap(color_map);
+    bmp.save_image("output/final.bmp");
 }
 }

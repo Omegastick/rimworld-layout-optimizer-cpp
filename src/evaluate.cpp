@@ -46,7 +46,7 @@ std::vector<std::pair<unsigned int, unsigned int>> flood_fill(std::vector<unsign
         const auto point = queue.front();
         queue.pop();
 
-        if (point.first > map_size || point.second > map_size ||
+        if (point.first >= map_size || point.second >= map_size ||
             map[point.second * map_size + point.first] != correct_type)
         {
             continue;
@@ -212,6 +212,11 @@ float evaluate(const Map &map, const std::vector<RoomConfig> &config)
     // Individual room operations
     for (const auto &room : room_infos)
     {
+        if (room.size < 9)
+        {
+            score -= 100.f;
+            continue;
+        }
         const auto &room_config = config[room.type];
 
         // Size
@@ -274,7 +279,7 @@ float evaluate(const Map &map, const std::vector<RoomConfig> &config)
         unsigned int room_count = 0;
         for (const auto &room : room_infos)
         {
-            if (room.type == i)
+            if (room.size >= 9 && room.type == i)
             {
                 room_count++;
             }

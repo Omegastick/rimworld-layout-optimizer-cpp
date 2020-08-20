@@ -42,6 +42,12 @@ Map::Map(unsigned int size, const std::vector<Room> &rooms)
     }
 }
 
+Map::Map(const std::vector<unsigned char> &data)
+{
+    m_size = static_cast<unsigned int>(std::sqrt(data.size()));
+    m_data = data;
+}
+
 bitmap_image Map::to_bitmap(const std::unordered_map<unsigned char, rgb_t> &color_map) const
 {
     bitmap_image image(m_size, m_size);

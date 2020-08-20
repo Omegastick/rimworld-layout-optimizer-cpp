@@ -35,6 +35,7 @@ class Map
 
   public:
     Map(unsigned int size, const std::vector<Room> &rooms);
+    Map(const std::vector<unsigned char> &data);
 
     bitmap_image to_bitmap(const std::unordered_map<unsigned char, rgb_t> &color_map) const;
 
