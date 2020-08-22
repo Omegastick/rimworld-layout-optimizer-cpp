@@ -64,8 +64,10 @@ void Map::make_tree(std::pair<unsigned int, unsigned int> boundary_tl,
                     std::pair<unsigned int, unsigned int> boundary_br, std::vector<Node> &nodes,
                     std::size_t begin, std::size_t end)
 {
-    if (end - begin == 1 || (end - begin == 2 && nodes[begin].x == nodes[begin + 1].x &&
-                             nodes[begin].y == nodes[begin + 1].y))
+    if (end - begin == 1 ||
+        std::equal(
+            nodes.begin() + begin + 1, nodes.begin() + end, nodes.begin() + begin,
+            [](const auto &lhs, const auto &rhs) { return lhs.x == rhs.x && lhs.y == rhs.y; }))
     {
         if (nodes[begin].type == floor)
         {
@@ -80,8 +82,8 @@ void Map::make_tree(std::pair<unsigned int, unsigned int> boundary_tl,
         }
         set(boundary_br.first, boundary_br.second, wall);
         std::sort(nodes[begin].door_positions.begin(), nodes[begin].door_positions.end());
-        int i = 0;
-        int door_index = 0;
+        unsigned int i = 0;
+        unsigned int door_index = 0;
         for (unsigned int x = boundary_tl.first; x < boundary_br.first; x++)
         {
             if (door_index < 4 && i++ == nodes[begin].door_positions[door_index])
@@ -274,7 +276,6 @@ TEST_CASE("Map")
     SUBCASE("K-D Tree")
     {
         const auto config = read_config_from_file("config.yml");
-        const auto color_map = config_to_color_map(config);
 
         std::random_device dev;
         std::mt19937 rng(dev());
@@ -283,14 +284,14 @@ TEST_CASE("Map")
         {
             if (std::uniform_int_distribution<int>(0, 1)(rng))
             {
-                nodes.push_back(
-                    {std::uniform_int_distribution<unsigned int>(0, 99)(rng),
-                     std::uniform_int_distribution<unsigned int>(0, 99)(rng),
-                     std::uniform_int_distribution<unsigned char>(0, config.size() - 1)(rng),
-                     {std::uniform_int_distribution<unsigned int>(0, 99)(rng),
-                      std::uniform_int_distribution<unsigned int>(0, 99)(rng),
-                      std::uniform_int_distribution<unsigned int>(0, 99)(rng),
-                      std::uniform_int_distribution<unsigned int>(0, 99)(rng)}});
+                nodes.push_back({std::uniform_int_distribution<unsigned int>(0, 99)(rng),
+                                 std::uniform_int_distribution<unsigned int>(0, 99)(rng),
+                                 std::uniform_int_distribution<unsigned char>(
+                                     0, static_cast<unsigned char>(config.size() - 1))(rng),
+                                 {std::uniform_int_distribution<unsigned int>(0, 99)(rng),
+                                  std::uniform_int_distribution<unsigned int>(0, 99)(rng),
+                                  std::uniform_int_distribution<unsigned int>(0, 99)(rng),
+                                  std::uniform_int_distribution<unsigned int>(0, 99)(rng)}});
             }
             else
             {
@@ -304,10 +305,7 @@ TEST_CASE("Map")
             }
         }
 
-        // std::vector<Node> nodes{{25, 25, floor}, {25, 75, door}, {90, 50, 25}};
         Map map(100, nodes);
-        const auto bmp = map.to_bitmap(color_map);
-        bmp.save_image("test.bmp");
     }
 
     SUBCASE("to_bitmap()")
