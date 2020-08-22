@@ -311,7 +311,7 @@ TEST_CASE("analyze_rooms()")
 {
     SUBCASE("Returns an empty vector if there are no rooms")
     {
-        CHECK(analyze_rooms(Map(5, {})).size() == 0);
+        CHECK(analyze_rooms(Map(5, std::vector<Room>{})).size() == 0);
     }
 
     SUBCASE("Returns correct info for one room")
@@ -332,7 +332,7 @@ TEST_CASE("create_costmap()")
 {
     SUBCASE("A map with all floors should have cost 1 everywhere")
     {
-        Map map(5, {});
+        Map map(5, std::vector<Room>{});
         const auto cost_map = create_costmap(map, {});
 
         for (const auto &tile : cost_map)
