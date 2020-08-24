@@ -108,7 +108,7 @@ std::vector<Node> permute(const std::vector<Node> &input, const std::vector<Room
                      std::uniform_int_distribution<std::size_t>(0, output.size() - 1)(rng));
     }
     // Swap two node's types
-    else if (choice < 0.15)
+    else if (choice < 0.25)
     {
         const auto node_1 = std::uniform_int_distribution<std::size_t>(0, output.size() - 1)(rng);
         const auto node_2 = std::uniform_int_distribution<std::size_t>(0, output.size() - 1)(rng);
@@ -117,18 +117,17 @@ std::vector<Node> permute(const std::vector<Node> &input, const std::vector<Room
         output[node_2].type = temp;
     }
     // Move a door
-    else if (choice < 0.3)
+    else if (choice < 0.4)
     {
         const auto node = std::uniform_int_distribution<std::size_t>(0, output.size() - 1)(rng);
         const auto door = std::uniform_int_distribution<std::size_t>(0, 3)(rng);
-        output[node].door_positions[door] = std::clamp(
-            0, static_cast<int>(map_size - 1),
-            static_cast<int>(static_cast<float>(output[node].door_positions[door]) +
-                             std::round(static_cast<float>(output[node].door_positions[door]) +
-                                        std::normal_distribution<float>(0, 5)(rng))));
+        const auto adjustment =
+            static_cast<int>(std::round(std::normal_distribution<float>(0, 5)(rng)));
+        output[node].door_positions[door] =
+            std::clamp(static_cast<int>(output[node].door_positions[door]) + adjustment, 0, 100);
     }
     // Nudge a node's x coordinate
-    else if (choice < 0.65)
+    else if (choice < 0.7)
     {
         const auto node = std::uniform_int_distribution<std::size_t>(0, output.size() - 1)(rng);
         const auto adjustment =
@@ -263,11 +262,15 @@ void run_optimization(const std::vector<RoomConfig> &config)
     auto nodes = generate_random_tree(config);
     float score = evaluate(Map(map_size, nodes), config);
 
-    float threshold = 10000.f;
+    float threshold = 100000.f;
+    float lambda = 0.5f;
+    int phase = 1;
 
-    for (int i = 0; i < 500; i++)
+    const int iterations = 1000;
+    for (int i = 0; i < iterations; i++)
     {
-        std::cout << std::to_string(static_cast<float>(i) / 500.f * 100.f) << "%\n";
+        std::cout << std::to_string(static_cast<float>(i) / iterations * 100.f) << "%\n";
+        std::cout << "Phase: " << std::to_string(phase) << "\n";
         std::cout << "Threshold: " << std::to_string(threshold) << "\n";
         std::cout << "Score: " << std::to_string(score) << "\n";
         std::cout << "---\n";
@@ -319,7 +322,18 @@ void run_optimization(const std::vector<RoomConfig> &config)
             }
         }
 
-        threshold *= 0.9f;
+        threshold *= lambda;
+
+        if (phase == 1 && threshold <= 100)
+        {
+            lambda = 0.95f;
+            phase = 2;
+        }
+        else if (phase == 2 && threshold <= 0.5f)
+        {
+            threshold = 200.f;
+            phase = 3;
+        }
     }
 
     std::cout << "100%\n";
